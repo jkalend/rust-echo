@@ -3,21 +3,23 @@ use predicates::prelude::*;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-fn helper(args: &[&str]) -> TestResult {
+fn helper(args: &[&str], nl_override: bool) -> TestResult {
     let mut cmd = Command::cargo_bin("echo")?;
-    let string_args = args
-        .into_iter()
-        .map(|a| a.to_string())
-        .collect::<Vec<String>>();
+    // let string_args = args
+    //     .into_iter()
+    //     .map(|a| a.to_string())
+    //     .collect::<Vec<String>>();
     let expected = args
         .into_iter()
-        .filter(|a| **a != "-n")
+        .filter(|a| **a != "-n" && !nl_override)
         .map(|a| a.to_string())
         .collect::<Vec<String>>();
-    cmd.args(&string_args)
+    cmd.args(args)
         .assert()
         .success()
-        .stdout(expected.join(" ") + if args.contains(&"-n") {""} else {"\n"});
+        .stdout(expected.join(" ") + if nl_override {"\n"}
+            else if args.contains(&"-n") {""}
+            else {"\n"});
     Ok(())
 }
 
@@ -40,7 +42,7 @@ fn one_arg() -> TestResult {
 }
 
 #[test]
-fn longer_hello() ->TestResult {
+fn longer_hello() -> TestResult {
     // let mut cmd = Command::cargo_bin("echo")?;
     // let expected = "Hello There\n".to_string();
     // cmd.arg("Hello There")
@@ -48,7 +50,7 @@ fn longer_hello() ->TestResult {
     //     .success()
     //     .stdout(expected);
     // Ok(())
-    helper(&["Hello There"])
+    helper(&["Hello There"], false)
 }
 
 // #[test]
@@ -63,16 +65,51 @@ fn longer_hello() ->TestResult {
 // }
 
 #[test]
-fn vectorized_hello() ->TestResult {
-    helper(&["abc", "dfg"])
+fn vectorized_hello() -> TestResult {
+    helper(&["abc", "dfg"], false)
 }
 
 #[test]
-fn longer_hello_without_nl() ->TestResult {
-    helper(&["Hello There", "-n"])
+fn longer_hello_without_nl() -> TestResult {
+    helper(&[ "-n", "Hello There"], false)
 }
 
 #[test]
-fn vectorized_hello_without_nl() ->TestResult {
-    helper(&["-n", "abc", "dfg", "-n"])
+fn vectorized_hello_without_nl() -> TestResult {
+    helper(&["-n", "abc", "dfg"], false)
+}
+
+#[test]
+fn kept_spaces_with_nl() -> TestResult {
+    helper(&["abc    ", " dfg"], false)
+}
+
+#[test]
+fn kept_spaces_without_nl() -> TestResult {
+    helper(&[ "-n", "abc     ", "dfg  "], false)
+}
+
+#[test]
+fn only_n() -> TestResult {
+    let mut cmd = Command::cargo_bin("echo")?;
+    cmd.arg("-n")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("Usage"));
+    Ok(())
+}
+
+#[test]
+fn only_space() -> TestResult {
+    helper(&[" "], false)
+}
+
+#[test]
+fn unknown_args() -> TestResult {
+    helper(&["-trf"], false)
+}
+
+#[test]
+fn unknown_args_without_nl() -> TestResult {
+    helper(&["-n", "-trfn"], false)
 }
