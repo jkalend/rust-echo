@@ -18,5 +18,8 @@ Options:
 $ cargo build
 ```
 
+## Manpage
+The build script also creates a `.1` file to be used as a manpage. This file can be found in the `target` directory.
+
 ## License
 This project is licensed under ISC license.
