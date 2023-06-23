@@ -1,0 +1,35 @@
+version: 2.1
+
+orbs:
+  codecov: codecov/codecov@3.2.3
+
+jobs:
+  test-rust:
+    docker:
+        - image: cimg/rust:1.70.0
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: "Install grcov"
+          command: |
+            cargo install grcov
+            rustup component add llvm-tools-preview
+      - run:
+          name: "Run tests"
+          command: |
+            export RUSTFLAGS="-Cinstrument-coverage"
+            export LLVM_PROFILE_FILE="rust_echo-%p-%m.profraw"
+            cargo test
+      - run:
+          name: "Run grcov"
+          command: |
+            grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing --ignore build.rs -o ./coverage/
+            grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore build.rs -o ./lcov.info
+      - codecov/upload:
+          token: CODECOV_TOKEN
+
+workflows:
+  build-and-test:
+    jobs:
+      - test-rust
