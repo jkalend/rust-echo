@@ -7,7 +7,7 @@ jobs:
   test-rust:
     docker:
         - image: cimg/rust:1.70.0
-    resource_class: small
+    resource_class: medium
     steps:
       - checkout
       - run:
@@ -23,8 +23,10 @@ jobs:
           name: "Run grcov"
           command: |
             grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing -o ./coverage/
+            grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing -o ./lcov.info
       - codecov/upload:
           token: CODECOV_TOKEN
+          file: lcov.info
 
 workflows:
   build-and-test:
