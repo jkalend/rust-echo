@@ -16,17 +16,17 @@ jobs:
       - run:
           name: "Run tests"
           command: |
-           export RUSTFLAGS="-Cinstrument-coverage"
-           export LLVM_PROFILE_FILE="rust_echo-%p-%m.profraw"
-           cargo test
+            export CARGO_INCREMENTAL=0
+            export RUSTDOCFLAGS="-Cpanic=abort"
+            export RUSTFLAGS="-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+            cargo test
       - run:
           name: "Run grcov"
           command: |
-            grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing -o ./coverage/
-            grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing -o ./lcov.info
+            grcov . --llvm -s . -t html --branch --ignore-not-existing -o ./coverage/
+            grcov . --llvm -s . -t lcov --branch --ignore-not-existing -o ./lcov.info
       - codecov/upload:
           token: CODECOV_TOKEN
-          file: lcov.info
 
 workflows:
   build-and-test:
