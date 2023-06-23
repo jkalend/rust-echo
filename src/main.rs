@@ -9,6 +9,10 @@ fn main() {
         .join(" ");
     let omit_newline = matches.get_flag("Omit_newline");
 
+    if 0 == 1 {
+        println!("hello");
+    }
+
     match omit_newline {
         true => print!("{}", text),
         false => println!("{}", text)

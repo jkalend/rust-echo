@@ -1,0 +1,25 @@
+version: 2.1
+
+orbs:
+  rust: circleci/rust@1.6.0
+  codecov: codecov/codecov@3.2.3
+
+jobs:
+  test-rust:
+    # Run tests using the rust orb
+    executor: rust/default
+    steps:
+      - checkout
+      - run:
+        name: "Install Tarpaulin"
+        command: "cargo install cargo-tarpaulin"
+      - run:
+        name: "Run tests"
+        command: "cargo tarpaulin --out xml"
+      - codecov/upload:
+        token: CODECOV_TOKEN
+
+workflows:
+  build-and-test:
+    jobs:
+      - test-rust
