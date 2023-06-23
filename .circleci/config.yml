@@ -7,14 +7,22 @@ jobs:
   test-rust:
     docker:
         - image: cimg/rust:1.70.0
+    resource_class: small
     steps:
       - checkout
       - run:
-          name: "Install Tarpaulin"
-          command: "cargo install cargo-tarpaulin"
+          name: "Install grcov"
+          command: "cargo install grcov"
       - run:
           name: "Run tests"
-          command: "cargo tarpaulin --out xml"
+          command: |
+           export RUSTFLAGS="-Cinstrument-coverage"
+           export LLVM_PROFILE_FILE="rust_echo-%p-%m.profraw"
+           cargo test
+      - run:
+          name: "Run grcov"
+          command: |
+            grcov . --binary-path ./target/debug/ -s . -t html --branch --ignore-not-existing -o ./coverage/
       - codecov/upload:
           token: CODECOV_TOKEN
 
